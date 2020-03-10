@@ -1,0 +1,30 @@
+"""
+// if update was submitted, store it
+if(array_key_exists("submit", $_REQUEST)) {
+    foreach($_REQUEST as $key => $val) {
+    $_SESSION[$key] = $val;
+    }
+}
+"""
+
+The code above from natas21-experimenter.natas21.labs.overthewire.org means
+whenever the submitted request contain "submit", $_REQUEST will update its
+array with all the given key and value in the http request.
+We can exploit this and pass the (admin,1) pairs to $_REQUEST.
+
+The original parameters are: 
+align=center&fontsize=100%25&bgcolor=yellow&submit=Update
+
+We will tamper this request by replace with our needed parameter:
+admin=1&submit=Update
+
+Add '?debug' to the url to confirm our parameters passed to $_REQUEST.
+
+Then redirect current page back to natas21.natas21labsoverthewire.org
+Since the two pages are colocate /** not so sure what exactly that means 
+but may be the two pages share the same Session id ? **/
+we are able to satisfy the 'if' condition ($_SESSION and array_key_exists("admin", $_SESSION) and $_SESSION["admin"] == 1)
+in the print_credential() function and the password in natas 21 is shown.
+
+#Username: natas22
+#Password: chG9fbe1Tq2eWVMgjYYD1MsfIvN461kJ
